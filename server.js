@@ -49,12 +49,12 @@ server.on('connection', (socket) => {
         
 
 
-    connection.end(function(err) {
+    /*connection.end(function(err) {
       if (err) {
         return console.log("Ошибка: " + err.message);
       }
       console.log("Подключение к БД закрыто");
-    });
+    });*/
 
 });
 
