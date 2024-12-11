@@ -20,6 +20,7 @@ server.on('connection', (socket) => {
   socket.on('message', (message) => { 
     
     const a = JSON.parse(message); //данные из полей ввода
+    
     console.log(`name: ${a.name}`);
     console.log(`Пароль: ${a.password}`);
 
@@ -27,9 +28,9 @@ server.on('connection', (socket) => {
       if (err) {
         return console.error("Ошибка: " + err.message);
       } else {
+        connection.query(`INSERT INTO sessions_active(id, host) VALUES (NULL, '${connection.config.host}');`), function(err, results, fields) {console.log(err)}
         console.log("Подключение к серверу MySQL успешно установлено");
-      }
-    });
+    }});
 
         /*connection.query(`INSERT INTO first(id, name, password) VALUES (NULL, '${a.name}', '${a.password}');`, function(err, results, fields) {
           if (err){
@@ -47,20 +48,29 @@ server.on('connection', (socket) => {
           } else {console.log("Отказано в доступе")}
         });
         
+        /*connection.query(`DELETE FROM sessions_active WHERE host ='${connection.config.host}';`, function(err, results, fields) {
+          if (err){
+            console.log(err)
+          }
+        });*/
 
-
-    /*connection.end(function(err) {
+    connection.end(function(err) {
       if (err) {
         return console.log("Ошибка: " + err.message);
       }
       console.log("Подключение к БД закрыто");
-    });*/
-
+      connection.query(`DELETE FROM sessions_active WHERE host ='${connection.config.host}';`, function(err, results, fields) {
+        if (err){
+          console.log(err)
+        }
+      connection.query(`INSERT INTO sessions_old(id, host, time) VALUES (NULL, '${connection.config.host}', 1);`), function(err, results, fields) {console.log(err)}
+    });
 });
 
 
   socket.on('close', () => {
     console.log('Соединение закрыто');
+    });
   });
 });
 
