@@ -4,36 +4,40 @@
 		<meta http-equiv="Content-Type"  charset=utf-8">
 		<title>АнСат концепция</title>
 		<link rel="stylesheet" href="ansat.css">  
-		<script src="dygraph.min.js"></script>
-		<script src="TLE decorder.js"></script>
-		<script src="Функция расчётов.js"></script>
 	</head>
     <body id="body" >
-		<style>
-		    input.TLE{margin-top:20px;margin-left:20px;margin-right:20px; width: 90%; height:60px;align:center;}
-	        input.text{margin-top:20px;margin-left:20px;}
-			p {margin-left:20px}
-			#gr1 {  float: left; margin-top: 0%;}
-			#gr2 {  float: left; margin-left: 5%; margin-top: 0%;}
-			#gr3 {  float: left; margin-left: 3%; margin-top: 0%;}
-		</style>
 		<div id='d10' class='hu wl pa '></div> 
 		<div id='d1' class='hu wl m '></div> 
 		<div id='d11' class='hhu wl m'></div> 
-		<div id='d2' class='hu wc m'><h1 align="center">Исследование уравнений Кеплера</h1></div> 
+		<div id='d2' class='hu wc m'><h1 align="center"></h1></div> 
 		<div id='d210' class='hhu wc m'></div> 
-		<div id='d21' class='hhum wc m'></div> 
+		<div id='d21' class='hhum wc m'>    
+			<div class="tabs">
+				<ul class="tab-list">
+					<li id="reg" class="tab-item active" data-tab="tab1">Регситрация</li>
+					<li id="Корпус" class="tab-item" data-tab="tab2">Корпус</li>
+					<li id="Двигатель" class="tab-item" data-tab="tab3" >Двигатель</li>
+					<li id="СУ" class="tab-item" data-tab="tab4" >СУ</li>
+				</ul>
+			</div>
+		</div> 
 		<div id='d30' class='hu wr m'></div>
 		<div id='d3' class='hu wr m'></div>
 		<div id='d31' class='hhu wr m'></div>
 		<div id='d4' class='hc wl m' style="padding-left:10px">
 			<h1>WebSocket Client</h1>
-			<input type="text" id="name" placeholder="Введите id пользователя" value="Alex">
-			<input type="text" id="passwordInput" placeholder="Введите пароль" value="123">
+			<input type="text" id="name" placeholder="Введите id пользователя" value="">
+			<input type="text" id="passwordInput" placeholder="Введите пароль" value="">
 			<button id="sendButton">Отправить</button>
 			<div id="messages"></div>
 		</div> 
 		<div id='d5' class='hc wc m'>
+			<div class="tab-content">
+				<div class="tab-pane active" id="tab1">Содержимое таба 1</div>
+				<div class="tab-pane" id="tab2"></div>
+				<div class="tab-pane" id="tab3">Содержимое таба 3</div>
+				<div class="tab-pane" id="tab4">С</div>
+			</div>
 		</div> 
 		<div id='d6' class='hc wr m'></div>  
 		<div id='d7' class='hd wl m'></div> 
@@ -41,37 +45,67 @@
 		<div id='d9' class='hd wr m'></div> 
 		<div id='d0' style='display:none'></div>
 		<script>
-			    const socket = new WebSocket('ws://localhost:8080');
+			const socket = new WebSocket('ws://localhost:8080');
+
+document.addEventListener('DOMContentLoaded', function() {
+	var tabItems = document.querySelectorAll('.tab-item');
+
+		tabItems.forEach(function(tab) {
+		tab.addEventListener('click', function() {
+		var tabId = this.getAttribute('data-tab');
+		var content = document.getElementById(tabId);
+
+			// Удаляем активный класс у текущих вкладок и контента
+			document.querySelector('.tab-item.active').classList.remove('active');
+			document.querySelector('.tab-pane.active').classList.remove('active');
+
+			// Добавляем активный класс для выбранной вкладки и контента
+			this.classList.add('active');
+			content.classList.add('active');
+			});
+		});
+	});
 
 socket.onopen = () => {
-  console.log('Соединение установлено');
+	console.log('Соединение установлено');
 };
 
 socket.onmessage = (event) => {
-  const messagesDiv = document.getElementById('messages');
-  const newMessage = document.createElement('div');
-  newMessage.textContent = `Сервер: ${event.data}`;
-  messagesDiv.appendChild(newMessage);
+	const message = eval(event.data)
+	for(let i=0; i<message.length;i++){
+		if (message[i].type == 'task'){
+			let task = message[i].data
+			console.log(task)
+			for(let n=0;n<task.length;n++){
+				let div1 = document.getElementById(`${task[n]}`);
+				div1.style.display = 'inline-block';
+			}
+		} else if(message[i].type == 'text'){
+			let text = message[i].data;
+			var div = document.getElementById('tab2');
+				div.innerHTML += `${text}`
+		} else {console.log(event.data)}
+	}	
 };
 
 socket.onclose = () => {
-  console.log('Соединение закрыто');
+	console.log('Соединение закрыто');
 };
 
 const sendButton = document.getElementById('sendButton');
 sendButton.addEventListener('click', () => {
-  const passwordInput = document.getElementById('passwordInput');
-  const password = passwordInput.value;
-  const name = document.getElementById('name').value;
-  
-  const a = {name:name, password:password};
-  socket.send(JSON.stringify(a));
+	const passwordInput = document.getElementById('passwordInput');
+	const password = passwordInput.value;
+	const name = document.getElementById('name').value;
 
-  passwordInput.value = '';
-  document.getElementById('name').value = '';
+	const a = {name:name, password:password};
+	socket.send(JSON.stringify(a));
+
+	passwordInput.value = '';
+	document.getElementById('name').value = '';
 });
 
-		</script>
+	</script>
 		
 	 </body>
 </html>

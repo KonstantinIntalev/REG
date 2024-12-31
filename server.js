@@ -1,15 +1,11 @@
+async function qwe(){
 const WebSocket = require('ws');
 
 const server = new WebSocket.Server({ port: 8080 });
 
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 
-const connection = mysql.createConnection({
-	host: "MySQL-5.7",
-	user: "root",
-	database: "test_1",
-	password: ""
-});
+
 
 
 
@@ -17,98 +13,98 @@ const connection = mysql.createConnection({
 server.on('connection', (socket) => {
   console.log('Новое соединение установлено');
 
-  socket.on('message', (message) => { 
+  socket.on('message', async function (message) { 
+
+    const connection = await mysql.createConnection({
+      host: "MySQL-5.7",
+      user: "root",
+      database: "test_1",
+      password: ""
+    });
+
 
     const a = JSON.parse(message); //данные из полей ввода
 
     const toMysqlFormatWithMillis = (date) => 
       `${date.toISOString().split('T').join(' ').slice(0, 22)}`;// функция для конвертации времени
-
+   
+    function sqlToJsDate(sqlDate) {
+      // sqlDate in SQL DATETIME format ("yyyy-mm-dd hh:mm:ss.ms")
+      var sqlDateArr1 = sqlDate.split("-");
+      var sYear = sqlDateArr1[0];
+      var sMonth = (Number(sqlDateArr1[1]) - 1).toString();
+   
+      var sqlDateArr2 = sqlDateArr1[2].split(" ");
+      var sDay = sqlDateArr2[0];
+   
+      var sqlDateArr3 = sqlDateArr2[1].split(":");
+      var sHour = sqlDateArr3[0];
+      var sMinute = sqlDateArr3[1];
+   
+      var sqlDateArr4 = sqlDateArr3[2].split(".");
+      var sSecond = sqlDateArr4[0];
+      var sMillisecond = sqlDateArr4[1];
+   
+      return new Date(sYear, sMonth, sDay, (sHour/1+3), sMinute, sSecond, sMillisecond);
+   }
     
     console.log(`name: ${a.name}`);
     console.log(`Пароль: ${a.password}`);
-/*
-    connection.connect(function(err){
-      if (err) {
-        return console.error("Ошибка: " + err.message);
-      } else {
-        connection.query(`INSERT INTO sessions_active (id, host, connectionId, time_start) VALUES (NULL, '${connection.config.host}', '${connection.connectionId}', '${toMysqlFormatWithMillis(new Date())}');`), function(err, results, fields) {console.log(err)}
-        //connection.query(`INSERT INTO `sessions_active` (`id`, `host`, `connectionId`, `time_start`) VALUES (NULL, 'awd', '123', '2024-12-03');`), function(err, results, fields) {console.log(err)}
-        console.log("Подключение к серверу MySQL успешно установлено");
-    }});*/
 
 
-    var string;
-
-    function setValue(value) {
-      string = value;
+    async function ses_st(connection){
+      let date = new Date();
+      connection.query(`INSERT INTO sessions_active (id, host, connection_Id, time_start) VALUES (NULL, '${connection.config.host}', '${connection.connection.connectionId}', '${toMysqlFormatWithMillis(date)}');`);
     }
-/*
+
+    await ses_st(connection)
+      .then(
+        res => console.log('Сессия открыта'), 
+        error => console.log('err_start')
+      );
+
+    let session = await connection.query(`SELECT * FROM sessions_active WHERE connection_Id = '${connection.connection.connectionId}'`)
+
+
+
+
+      let quant = [];
+        
+
         // функция проверки
-        connection.query(`SELECT * FROM users WHERE name = '${a.name}'`, function(err, results, fields) {
-          //console.log(err);
-          //console.log(results); // собственно данные
-          //console.log(fields); // мета-данные полей 
-         if ( results[0].password==a.password ){
+          let string_name = await connection.query(`SELECT * FROM users WHERE name = '${a.name}'`)
+          if ( string_name[0][0].password==a.password ){
             console.log(`Вы вошли в систему под именем ${a.name}`) 
-            setValue(results);
           } else {console.log("Отказано в доступе")}
-        });
-      
         // функция задач
-        connection.query(`SELECT * FROM users_tasks WHERE user_id = '1'`, function(err, results, fields) {
-          //console.log(err);
-          //console.log(results); // собственно данные
-          //console.log(fields); // мета-данные полей 
-            console.log(`Вам разрешен доступ к ${results[0].task_id}`)
-        });
-console.log(string);
-*/
-
-
-        function query(sql) {
-          return new Promise((resolve, reject) => {
-            connection.query(sql, (err, rows) => {
-              if (err) {
-                reject(err);
-                }
-              else
-                resolve(rows);
-                setValue(rows)
-                console.log(string);
-            });
-          });
+          let tasks = await connection.query(`SELECT * FROM users_tasks WHERE user_id = '${string_name[0][0].user_id}'`)
+          if (tasks[0].length != 0) {
+            for (let i=0;i<tasks[0].length;i++){
+              console.log(`Вам разрешен доступ к ${tasks[0][i].task_id}`)
+              quant.push(tasks[0][i].task_id)
+            }
+          } else {console.log(`Вам разрешен доступ к ${tasks[0][0].task_id}`)}
+           
+        // имя задчи
+        let task =[];
+        for(let i=0;i<quant.length;i++){
+          let name = await connection.query(`SELECT * FROM tasks WHERE task_id = '${quant[i]}'`)
+          task.push(name[0][0].name_task)
         }
 
-       query(`select * from users WHERE user_id ='1'`);
-        
-    
-/*
-  function del(){
-    
-    connection.query(`INSERT INTO sessions_old(id, host, time, connectionId, time_start, time_end) VALUES (NULL, '${string[0].host}', '1','${string[0].host}', '${time_start[0].time_start}', '${toMysqlFormatWithMillis(new Date())}');`), function(err, results, fields) {console.log()}
-    
-    connection.query(`DELETE FROM sessions_active WHERE connectionId ='${connection.connectionId}';`), function(err, results, fields) {
-      if (err){
-        console.log(err)
-      }}
-  }
+async function ses_end(){
+    let date = new Date();
+    connection.query(`INSERT INTO sessions_old(id, host, time, connection_Id, time_start, time_end) VALUES (NULL, '${session[0][0].host}', '${(new Date() - sqlToJsDate(session[0][0].time_start))/1000}', '${session[0][0].connection_Id}', '${session[0][0].time_start}', '${toMysqlFormatWithMillis(date)}');`);
+    connection.query(`DELETE FROM sessions_active WHERE connection_Id ='${connection.connection.connectionId}';`)
+    socket.send(JSON.stringify([{data:task, type:'task'}, {data:"hello", type:'text'}]))
+    console.log("Сессия закрыта")
+}
 
-   //del(console.log(1));
-   //const time_start =[];
-   //query(`SELECT time_start FROM sessions_active WHERE connectionId ='${connection.connectionId}';`, function(err, results, fields) {setValue(results)})
-
-*/
-
-
-   connection.end(function(err) {
-        if (err) {
-          return console.log("Ошибка: " + err.message);
-        } else {
-            console.log("Подключение к БД закрыто");
-          }
-    });
-});
+ses_end().then(
+  await connection.end()
+)
+   
+  });
 
 
   socket.on('close', () => {
@@ -116,4 +112,6 @@ console.log(string);
     });
   });
 
-console.log('Сервер WebSocket запущен на порту 8080');
+console.log('Сервер WebSocket запущен на порту 8080');}
+
+qwe();

@@ -165,3 +165,51 @@ ul.menu_file  :hover{color: #ffffff; /*наезд*/}
 
 
 
+.tabs {
+	margin-left: 10px;
+	width: 90%;
+	display: inline-block;
+  }
+   
+.tab-list {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+   
+.tab-item {
+	display: inline-block;
+	margin-right: 10px;
+	cursor: pointer;
+	background-color: #f1f1f1;
+}
+   
+.tab-item.active {
+	background-color: #fff;
+}
+   
+.tab-content {
+	border: 1px solid #f1f1f1;
+	padding: 20px;
+	border-radius: 5px;
+}
+   
+.tab-pane {
+	display: none;
+}
+   
+.tab-pane.active {
+	display: block;
+}
+#reg {
+	display: inline-block;
+}
+#Корпус {
+	display: none;
+}
+#Двигатель {
+	display: none;
+}
+#СУ {
+	display: none;
+}
